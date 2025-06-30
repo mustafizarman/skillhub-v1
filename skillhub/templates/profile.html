@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% block title %}User Profile{% endblock %}
+
+{% block content %}
+<style>
+    .profile-picture-wrapper {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .profile-picture-wrapper label {
+    display: block;
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #444;
+  }
+
+  #preview {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #e0e0e0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+
+  #preview:hover {
+    transform: scale(1.05);
+  }
+
+  .profile-container {
+    max-width: 600px;
+    margin: 60px auto;
+    background-color: #fff;
+    padding: 40px 30px;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+  }
+
+  .profile-container:hover {
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+  }
+
+  .profile-container h2 {
+    text-align: center;
+    margin-bottom: 35px;
+    color: #222;
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  .form-group {
+    margin-bottom: 22px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #444;
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    background: #f9f9f9;
+    transition: border 0.3s;
+  }
+
+  .form-group input:focus {
+    border-color: #1976d2;
+    outline: none;
+    background: #fff;
+  }
+
+  #preview {
+    display: block;
+    margin: 10px auto;
+    border-radius: 50%;
+    border: 3px solid #e0e0e0;
+    max-width: 130px;
+    max-height: 130px;
+    object-fit: cover;
+    transition: all 0.3s ease;
+  }
+
+  .edit-btn, .submit-btn {
+    width: 100%;
+    padding: 13px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+
+  .edit-btn {
+    background-color: #1976d2;
+    color: #fff;
+    margin-bottom: 12px;
+  }
+
+  .submit-btn {
+    background-color: #4caf50;
+    color: #fff;
+    display: none;
+  }
+
+  .edit-btn:hover {
+    background-color: #125ea7;
+    transform: translateY(-1px);
+  }
+
+  .submit-btn:hover {
+    background-color: #3f9241;
+    transform: translateY(-1px);
+  }
+
+  .success-msg {
+    margin-top: 20px;
+    color: #388e3c;
+    font-weight: 600;
+    text-align: center;
+    font-size: 14px;
+    display: none;
+  }
+
+  @media (max-width: 650px) {
+    .profile-container {
+      padding: 25px 20px;
+    }
+
+    .form-group input {
+      font-size: 15px;
+    }
+
+    .edit-btn, .submit-btn {
+      font-size: 15px;
+    }
+  }
+</style>
+
+<div class="profile-container">
+  <h2>My Profile</h2>
+  
+  <form id="profile-form">
+    <div class="profile-picture-wrapper">
+      <label for="preview"></label>
+      <img id="preview" src="/static/default_avatar.jpg" alt="Profile preview" />
+    </div>
+    <div class="form-group">
+      <label>Email (read-only)</label>
+      <input type="email" name="email" disabled>
+    </div>
+    <div class="form-group">
+      <label>Username (read-only)</label>
+      <input type="text" name="username" disabled>
+    </div>
+    <div class="form-group">
+      <label>Birthday</label>
+      <input type="date" name="birthday" disabled>
+    </div>
+    <div class="form-group">
+      <label>Designation</label>
+      <input type="text" name="designation" disabled>
+    </div>
+    <div class="form-group">
+      <label>Phone Number</label>
+      <input type="text" name="phone_number" disabled>
+    </div>
+
+    <button type="button" class="edit-btn" id="edit-btn">Update Profile</button>
+    <button type="submit" class="submit-btn" id="save-btn" style="display: none;">Save Changes</button>
+    <div id="success-msg" class="success-msg" style="display: none;">Profile updated successfully!</div>
+  </form>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const fields = ['birthday', 'designation', 'phone_number'];
+    const editBtn = document.getElementById('edit-btn');
+    const saveBtn = document.getElementById('save-btn');
+
+    fetch("/api/profile/", { credentials: "include" })
+      .then(res => res.json())
+      .then(data => {
+        document.querySelector("input[name='email']").value = data.email || '';
+        document.querySelector("input[name='username']").value = data.username || '';
+        document.querySelector("input[name='birthday']").value = data.birthday || '';
+        document.querySelector("input[name='designation']").value = data.designation || '';
+        document.querySelector("input[name='phone_number']").value = data.phone_number || '';
+
+        const preview = document.getElementById("preview");
+        let triedFallback = false;
+        if (data.profile_picture) {
+          console.log("propic -- ", data.profile_picture);
+          preview.src = data.profile_picture;
+          preview.onerror = () => {
+            if (!triedFallback) {
+              triedFallback = true;
+              preview.src = '/static/default_avatar.jpg';  // ✅ fallback
+            } else {
+              console.warn("Fallback image also failed to load.");
+            }
+          };
+        } else{
+          preview.src = '/static/default_avatar.jpg';  // ✅ fallback
+        }
+      });
+
+    editBtn.addEventListener("click", () => {
+      fields.forEach(name => {
+        document.querySelector(`input[name='${name}']`).disabled = false;
+      });
+      editBtn.style.display = 'none';
+      saveBtn.style.display = 'block';
+    });
+
+    document.getElementById("profile-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const payload = {
+        birthday: document.querySelector("input[name='birthday']").value,
+        designation: document.querySelector("input[name='designation']").value,
+        phone_number: document.querySelector("input[name='phone_number']").value,
+      };
+
+      fetch("/api/profile/", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1]
+        },
+        credentials: "include",
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("success-msg").style.display = "block";
+        saveBtn.style.display = 'none';
+        editBtn.style.display = 'block';
+        fields.forEach(name => {
+          document.querySelector(`input[name='${name}']`).disabled = true;
+        });
+      });
+    });
+  });
+</script>
+{% endblock %}

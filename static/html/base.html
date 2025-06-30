@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}My Site{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'cs/styles.css' %}">
+</head>
+
+<body>
+
+
+  {% if user.is_authenticated %}
+  <nav>
+    <div class="nav-left">
+      <a href="/">🏠 Home</a>
+    </div>
+    <div class="nav-right">
+
+      <span>
+        Welcome <a href="{% url 'skillhub:user-profile-page' %}"
+          style="color: white; text-decoration: underline;">{{ user.get_username }}</a>
+      </span>
+      {% comment %} <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+      </form> {% endcomment %}
+      <a href="{% url 'logout' %}">Logout</a>
+
+    </div>
+  </nav>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>
+    <p>&copy; 2025 SkillHub</p>
+  </footer>
+
+  {% else %}
+  <div class="login-page">
+    <a href="{% url 'social:begin' 'google-oauth2' %}?next={{ request.path }}">Login with Google</a>
+
+  </div>
+  {% endif %}
+
+</body>
+
+</html>
